@@ -12,7 +12,7 @@ using Sales_Management_System_API.Data;
 namespace Sales_Management_System_API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260508174938_InitialDb")]
+    [Migration("20260509081901_InitialDb")]
     partial class InitialDb
     {
         /// <inheritdoc />
@@ -242,6 +242,9 @@ namespace Sales_Management_System_API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsUsed")
                         .HasColumnType("bit");
 
                     b.Property<string>("JwtId")

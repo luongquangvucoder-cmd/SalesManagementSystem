@@ -34,12 +34,74 @@ namespace Sales_Management_System_API.Controllers.v1
             });
         }
 
+        [HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(string email, string token)
+        {
+            var result = await _authService.ConfirmEmailAsync(email, token);
+
+            return Ok(result);
+        }
+
         [HttpPost("login-user")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var result = await _authService.LoginAsync(loginDto);
 
             return Ok(result);
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto request)
+        {
+            var result = await _authService.RefreshTokenAsync(request);
+
+            return Ok(new ApiResponse<AuthResultDto>
+            {
+                Success = true,
+                Message = "Token refreshed successfully",
+                Data = result
+            });
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] LogoutDto request)
+        {
+            var result = await _authService.LogoutAsync(request);
+
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                Message = result
+            });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            var result = await _authService.ForgotPasswordAsync(dto);
+
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                Message = result
+            });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            var result = await _authService.ResetPasswordAsync(dto);
+
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                Message = result
+            });
         }
     }
 }

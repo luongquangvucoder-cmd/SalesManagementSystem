@@ -16,6 +16,49 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Cấu hình Database Context
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+// Cấu hình Identity
+builder.Services
+    .AddIdentityCore<ApplicationUser>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+// Cấu hình Xác thực JWT (Authentication)
+builder.Services
+    .AddAuthentication(config =>
+    {
+        config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        config.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        config.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.SaveToken = true;
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters()
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!)),
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["JWT:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["JWT:Audience"]
+        };
+    });
+
+// Cấu hình Authorization
+builder.Services.AddAuthorization();
+
 // Cấu hình Versioning
 builder.Services.AddApiVersioning(options =>
 {
@@ -29,21 +72,7 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true; // Thay thế {version} trong route template
 });
 
-// Cấu hình Database Context
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
-
-// Cấu hình Identity
-builder.Services
-    .AddIdentity<ApplicationUser, IdentityRole>(options =>
-    {
-        options.User.RequireUniqueEmail = true;
-    })
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders();
-
+// Cấu hình Controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -91,6 +120,7 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Cấu hình CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -102,37 +132,19 @@ builder.Services.AddCors(options =>
         });
 });
 
-builder.Services.AddScoped<IAuthService, AuthService>();
-
+// Đăng ký Repositories
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
-// Cấu hình Xác thực JWT (Authentication)
-builder.Services
-    .AddAuthentication(config =>
-    {
-        config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        config.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        config.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.SaveToken = true;
-        options.RequireHttpsMetadata = false;
-        options.TokenValidationParameters = new TokenValidationParameters()
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!)),
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["JWT:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["JWT:Audience"]
-        };
-    });
-
-builder.Services.AddAuthorization();
+// Đăng ký Services
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 var app = builder.Build();
+
+// Xử lý Exception toàn cục
+app.UseMiddleware<ExceptionMiddleware>();
 
 // Cấu hình HTTP Request Pipeline (Middleware)
 if (app.Environment.IsDevelopment())
@@ -152,12 +164,13 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors("AllowAll");
-
-app.UseMiddleware<ExceptionMiddleware>();
-
+// Chuyển hướng HTTP sang HTTPS
 app.UseHttpsRedirection();
 
+// Cho phép CORS
+app.UseCors("AllowAll");
+
+// Xác thực & Phân quyền 
 app.UseAuthentication();
 app.UseAuthorization();
 

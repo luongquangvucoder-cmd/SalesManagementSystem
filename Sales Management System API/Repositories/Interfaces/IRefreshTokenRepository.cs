@@ -7,5 +7,7 @@ namespace Sales_Management_System_API.Repositories.Interfaces
         Task AddAsync(RefreshToken refreshToken);
 
         Task SaveChangesAsync();
+
+        Task<RefreshToken?> GetByTokenAsync(string token);
     }
 }

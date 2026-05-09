@@ -26,7 +26,11 @@ namespace Sales_Management_System_API.Middleware
                 var statusCode = ex switch
                 {
                     BadRequestException => HttpStatusCode.BadRequest,
+                    ConflictException => HttpStatusCode.Conflict,
+                    ForbiddenException => HttpStatusCode.Forbidden,
+                    NotFoundException => HttpStatusCode.NotFound,
                     UnauthorizedException => HttpStatusCode.Unauthorized,
+                    UnprocessableEntityException => HttpStatusCode.UnprocessableEntity,
                     _ => HttpStatusCode.InternalServerError
                 };
 
@@ -38,9 +42,7 @@ namespace Sales_Management_System_API.Middleware
                     Message = ex.Message
                 };
 
-                await context.Response.WriteAsync(
-                    JsonSerializer.Serialize(response)
-                );
+                await context.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
         }
     }
