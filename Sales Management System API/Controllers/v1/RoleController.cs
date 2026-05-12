@@ -10,7 +10,7 @@ namespace Sales_Management_System_API.Controllers.v1
     [ApiVersion("1.0")]
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class RoleController : ControllerBase
     {
         private readonly IRoleService _roleService;

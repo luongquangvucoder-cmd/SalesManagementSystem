@@ -93,6 +93,12 @@ builder.Services.AddSwaggerGen(options =>
         });
     }
 
+    //options.SwaggerDoc("v1", new OpenApiInfo
+    //{
+    //    Title = "Sales Management System API",
+    //    Version = "v1"
+    //});
+
     // Cấu hình định nghĩa bảo mật JWT Bearer cho Swagger UI
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -135,13 +141,43 @@ builder.Services.AddCors(options =>
 // Đăng ký Repositories
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 
 // Đăng ký Services
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "text/plain";
+
+        await context.Response.WriteAsync(ex.ToString());
+    }
+});
 
 // Xử lý Exception toàn cục
 app.UseMiddleware<ExceptionMiddleware>();
@@ -162,6 +198,10 @@ if (app.Environment.IsDevelopment())
                 $"Sales API - {description.GroupName.ToUpperInvariant()}");
         }
     });
+    //app.UseSwaggerUI(options =>
+    //{
+    //    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Sales API V1");
+    //});
 }
 
 // Chuyển hướng HTTP sang HTTPS
